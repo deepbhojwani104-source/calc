@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calculator — deepbhojwani104</title>
+  <meta name="description" content="A beautiful, fully functional web calculator. Perform arithmetic operations instantly in your browser."/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #0d0d1a;
+      font-family: 'Outfit', sans-serif;
+      overflow: hidden;
+    }
+
+    .bg-blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(90px);
+      opacity: 0.15;
+      pointer-events: none;
+      animation: drift 10s ease-in-out infinite alternate;
+    }
+    .b1 { width: 500px; height: 500px; background: #6366f1; top: -150px; left: -150px; }
+    .b2 { width: 400px; height: 400px; background: #8b5cf6; bottom: -120px; right: -120px; animation-delay: 3s; }
+    .b3 { width: 250px; height: 250px; background: #06b6d4; top: 40%; left: 60%; animation-delay: 6s; }
+    @keyframes drift {
+      from { transform: translate(0,0) scale(1); }
+      to   { transform: translate(30px, 20px) scale(1.08); }
+    }
+
+    .calc-wrapper { position: relative; z-index: 1; }
+
+    h1.brand {
+      text-align: center;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: #4b4b6a;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+
+    .calculator {
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 28px;
+      padding: 24px;
+      width: 340px;
+      box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(99,102,241,0.15), inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+
+    .display {
+      background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 18px;
+      padding: 20px 20px 14px;
+      margin-bottom: 20px;
+      min-height: 100px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-end;
+      overflow: hidden;
+    }
+
+    #expression { font-size: 0.85rem; color: #555577; min-height: 20px; word-break: break-all; text-align: right; }
+    #result {
+      font-size: 2.8rem;
+      font-weight: 700;
+      color: #e0e0ff;
+      word-break: break-all;
+      text-align: right;
+      line-height: 1.1;
+      transition: transform 0.1s ease;
+    }
+    #result.error { color: #f87171; font-size: 1.6rem; }
+    #result.pop   { transform: scale(1.06); }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    button {
+      height: 66px;
+      border-radius: 16px;
+      border: none;
+      font-family: 'Outfit', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s ease, background 0.15s;
+      position: relative;
+      overflow: hidden;
+      outline: none;
+    }
+    button:active { transform: scale(0.91); }
+
+    .btn-num {
+      background: rgba(255,255,255,0.07);
+      color: #d0d0f0;
+      border: 1px solid rgba(255,255,255,0.06);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .btn-num:hover { background: rgba(255,255,255,0.13); }
+
+    .btn-op {
+      background: rgba(99,102,241,0.18);
+      color: #a5b4fc;
+      border: 1px solid rgba(99,102,241,0.25);
+    }
+    .btn-op:hover { background: rgba(99,102,241,0.3); color: #c7d2fe; }
+
+    .btn-eq {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: #fff;
+      border: none;
+      box-shadow: 0 6px 24px rgba(99,102,241,0.45);
+      font-size: 1.4rem;
+    }
+    .btn-eq:hover { box-shadow: 0 8px 30px rgba(99,102,241,0.6); transform: translateY(-2px); }
+    .btn-eq:active { transform: scale(0.92); }
+
+    .btn-clear {
+      background: rgba(239,68,68,0.15);
+      color: #fca5a5;
+      border: 1px solid rgba(239,68,68,0.2);
+    }
+    .btn-clear:hover { background: rgba(239,68,68,0.28); }
+
+    .btn-back {
+      background: rgba(251,146,60,0.15);
+      color: #fdba74;
+      border: 1px solid rgba(251,146,60,0.2);
+      font-size: 1.3rem;
+    }
+    .btn-back:hover { background: rgba(251,146,60,0.28); }
+
+    .btn-pct {
+      background: rgba(6,182,212,0.15);
+      color: #67e8f9;
+      border: 1px solid rgba(6,182,212,0.2);
+    }
+    .btn-pct:hover { background: rgba(6,182,212,0.28); }
+
+    .span2 { grid-column: span 2; }
+
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.25);
+      transform: scale(0);
+      animation: rip 0.5s linear;
+      pointer-events: none;
+    }
+    @keyframes rip { to { transform: scale(5); opacity: 0; } }
+
+    .footer { text-align: center; margin-top: 18px; font-size: 0.72rem; color: #333355; letter-spacing: 1px; }
+  </style>
+</head>
+<body>
+
+  <div class="bg-blob b1"></div>
+  <div class="bg-blob b2"></div>
+  <div class="bg-blob b3"></div>
+
+  <div class="calc-wrapper">
+    <h1 class="brand">🧮 Calculator</h1>
+    <div class="calculator">
+      <div class="display">
+        <div id="expression"></div>
+        <div id="result">0</div>
+      </div>
+      <div class="buttons">
+        <button class="btn-clear" onclick="clearAll(this)" id="btn-ac">AC</button>
+        <button class="btn-back"  onclick="backspace(this)" id="btn-del">⌫</button>
+        <button class="btn-pct"   onclick="percent(this)"   id="btn-pct">%</button>
+        <button class="btn-op"    onclick="inputOp('/',this)" id="btn-div">÷</button>
+
+        <button class="btn-num" onclick="inputNum('7',this)" id="btn-7">7</button>
+        <button class="btn-num" onclick="inputNum('8',this)" id="btn-8">8</button>
+        <button class="btn-num" onclick="inputNum('9',this)" id="btn-9">9</button>
+        <button class="btn-op"  onclick="inputOp('*',this)"  id="btn-mul">×</button>
+
+        <button class="btn-num" onclick="inputNum('4',this)" id="btn-4">4</button>
+        <button class="btn-num" onclick="inputNum('5',this)" id="btn-5">5</button>
+        <button class="btn-num" onclick="inputNum('6',this)" id="btn-6">6</button>
+        <button class="btn-op"  onclick="inputOp('-',this)"  id="btn-sub">−</button>
+
+        <button class="btn-num" onclick="inputNum('1',this)" id="btn-1">1</button>
+        <button class="btn-num" onclick="inputNum('2',this)" id="btn-2">2</button>
+        <button class="btn-num" onclick="inputNum('3',this)" id="btn-3">3</button>
+        <button class="btn-op"  onclick="inputOp('+',this)"  id="btn-add">+</button>
+
+        <button class="btn-num span2" onclick="inputNum('0',this)" id="btn-0">0</button>
+        <button class="btn-num"       onclick="inputDot(this)"     id="btn-dot">.</button>
+        <button class="btn-eq"        onclick="calculate(this)"    id="btn-eq">=</button>
+      </div>
+    </div>
+    <p class="footer">DEEPBHOJWANI104 · GITHUB PAGES</p>
+  </div>
+
+  <script>
+    let current = '', expression = '', justCalc = false;
+    const resultEl = document.getElementById('result');
+    const exprEl   = document.getElementById('expression');
+    const OPS = ['+','-','*','/'];
+
+    function display(val) {
+      resultEl.classList.remove('error');
+      resultEl.textContent = val === '' ? '0' : val;
+      resultEl.classList.remove('pop');
+      void resultEl.offsetWidth;
+      resultEl.classList.add('pop');
+      setTimeout(() => resultEl.classList.remove('pop'), 150);
+    }
+
+    function fmtExpr(e) {
+      return e.replace(/\*/g,'×').replace(/\//g,'÷').replace(/-/g,'−');
+    }
+
+    function inputNum(n, btn) {
+      ripple(btn);
+      if (justCalc) { current = ''; expression = ''; justCalc = false; }
+      current += n; expression += n;
+      exprEl.textContent = fmtExpr(expression);
+      display(current);
+    }
+
+    function inputOp(op, btn) {
+      ripple(btn);
+      justCalc = false;
+      if (current === '' && expression === '') return;
+      if (OPS.includes(expression.slice(-1))) expression = expression.slice(0,-1);
+      expression += op;
+      exprEl.textContent = fmtExpr(expression);
+      current = '';
+    }
+
+    function inputDot(btn) {
+      ripple(btn);
+      if (current.includes('.')) return;
+      if (current === '' || justCalc) { current = '0'; expression += '0'; justCalc = false; }
+      current += '.'; expression += '.';
+      exprEl.textContent = fmtExpr(expression);
+      display(current);
+    }
+
+    function percent(btn) {
+      ripple(btn);
+      if (!current) return;
+      const val = parseFloat(current) / 100;
+      current = String(val);
+      expression = expression.replace(/[\d.]+$/, current);
+      exprEl.textContent = fmtExpr(expression);
+      display(current);
+    }
+
+    function backspace(btn) {
+      ripple(btn);
+      if (justCalc) return;
+      expression = expression.slice(0,-1);
+      current    = current.slice(0,-1);
+      exprEl.textContent = fmtExpr(expression);
+      display(current);
+    }
+
+    function clearAll(btn) {
+      ripple(btn);
+      current = ''; expression = ''; justCalc = false;
+      exprEl.textContent = '';
+      display('');
+    }
+
+    function calculate(btn) {
+      ripple(btn);
+      if (!expression) return;
+      exprEl.textContent = fmtExpr(expression) + ' =';
+      try {
+        const safe = expression.replace(/[^0-9+\-*/.]/g,'');
+        let res = Function('"use strict"; return (' + safe + ')')();
+        if (!isFinite(res)) throw new Error();
+        res = parseFloat(res.toPrecision(12));
+        current = String(res); expression = String(res);
+        display(current);
+      } catch {
+        resultEl.classList.add('error');
+        resultEl.textContent = 'Error';
+        current = ''; expression = '';
+      }
+      justCalc = true;
+    }
+
+    function ripple(btn) {
+      if (!btn || !btn.offsetWidth) return;
+      const r = document.createElement('span');
+      r.classList.add('ripple');
+      const s = Math.max(btn.offsetWidth, btn.offsetHeight);
+      r.style.cssText = `width:${s}px;height:${s}px;left:${btn.offsetWidth/2-s/2}px;top:${btn.offsetHeight/2-s/2}px`;
+      btn.appendChild(r);
+      setTimeout(() => r.remove(), 500);
+    }
+
+    document.addEventListener('keydown', e => {
+      const k = e.key, b = document.createElement('button');
+      if (k>='0'&&k<='9') inputNum(k,b);
+      else if (k==='.') inputDot(b);
+      else if (k==='+') inputOp('+',b);
+      else if (k==='-') inputOp('-',b);
+      else if (k==='*') inputOp('*',b);
+      else if (k==='/') { e.preventDefault(); inputOp('/',b); }
+      else if (k==='%') percent(b);
+      else if (k==='Enter'||k==='=') calculate(b);
+      else if (k==='Backspace') backspace(b);
+      else if (k==='Escape') clearAll(b);
+    });
+  </script>
+</body>
+</html>
